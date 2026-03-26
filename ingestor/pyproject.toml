@@ -1,0 +1,12 @@
+[project]
+name = "ingestor"
+version = "0.1.0"
+description = "多源异类数据采集汇聚核心项目"
+requires-python = ">=3.13"
+dependencies = []
+
+[tool.uv.workspace]
+members = [
+    "crawler",
+    "server",
+]

@@ -1,0 +1,27 @@
+[project]
+name = "server"
+version = "0.1.0"
+description = "数据采集管理与编排服务，提供配置管理、结果管理、日志管理与 crawler 编排"
+authors = [
+    { name = "lyping", email = "756300576@qq.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "crawler",
+    "fastapi[standard]>=0.115.0",
+    "sqlmodel>=0.0.24",
+    "psycopg2-binary>=2.9.10",
+    "alembic>=1.15.0",
+    "prefect>=3.0.0",
+    "pydantic-settings>=2.8.0",
+]
+
+[project.scripts]
+server = "server.main:app"
+
+[build-system]
+requires = ["uv_build>=0.10.9,<0.11.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+crawler = { workspace = true }

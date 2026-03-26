@@ -1,0 +1,21 @@
+[project]
+name = "crawler"
+version = "0.1.0"
+description = "多源异类数据采集引擎库，提供 source->line->data 统一抽象与 crawler->task->data 执行模型"
+authors = [
+    { name = "lyping", email = "756300576@qq.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic>=2.11.0",
+    "httpx>=0.28.0",
+    "click>=8.1.0",
+    "rich>=14.0.0",
+]
+
+[project.scripts]
+crawler = "crawler.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.10.9,<0.11.0"]
+build-backend = "uv_build"
