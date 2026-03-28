@@ -1,0 +1,18 @@
+# 仅部署 admin（Next.js）；需已能访问 ingestor API
+# 在仓库根目录执行：
+#   docker compose -f admin/compose.yaml up -d --build
+# 指定 API 基地址（无 /api 后缀）：
+#   ADMIN_BUILD_BACKEND_URL=https://api.example.com docker compose -f admin/compose.yaml up -d --build
+
+services:
+  admin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BACKEND_URL: ${ADMIN_BUILD_BACKEND_URL:-http://host.docker.internal:8000}
+    restart: unless-stopped
+    ports:
+      - "${ADMIN_PORT:-3000}:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

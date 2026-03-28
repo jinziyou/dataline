@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from crawler.models.source import SourceType
-from crawler.models.execution import DownloaderType
+from crawler.crawler import DownloaderType
+from crawler.source import SourceType
 
 
 class SourcePreset(BaseModel):

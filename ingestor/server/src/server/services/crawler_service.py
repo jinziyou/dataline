@@ -13,27 +13,13 @@ from datetime import datetime
 
 from sqlmodel import Session
 
-from crawler import CrawlerRunner, Source, Line, SourceType
-from crawler.config import generate_crawler_config
-from crawler.models.execution import CrawlerResult
+from crawler import Crawler, CrawlerResult, CrawlerRunner, Line, Source, SourceType
 
 from server.models.source import SourceModel, LineModel
 from server.models.task import CrawlerTaskModel, CollectedDataModel
 from server.models.log import CrawlerLogModel
 
 logger = logging.getLogger(__name__)
-
-
-def _to_domain_source(m: SourceModel) -> Source:
-    return Source(
-        id=m.id,
-        name=m.name,
-        type=SourceType(m.type),
-        url=m.url,
-        description=m.description,
-        enabled=m.enabled,
-        meta=m.meta or {},
-    )
 
 
 def _to_domain_line(m: LineModel) -> Line:
@@ -48,17 +34,27 @@ def _to_domain_line(m: LineModel) -> Line:
     )
 
 
+def _to_domain_source(m: SourceModel, line_models: list[LineModel]) -> Source:
+    return Source(
+        id=m.id,
+        name=m.name,
+        type=SourceType(m.type),
+        url=m.url,
+        description=m.description,
+        enabled=m.enabled,
+        meta=m.meta or {},
+        lines=[_to_domain_line(lm) for lm in line_models],
+    )
+
+
 async def run_crawler_for_source(
     source_model: SourceModel,
     line_models: list[LineModel],
     overrides: dict | None = None,
 ) -> CrawlerResult:
-    """调用 crawler 库执行采集"""
-    source = _to_domain_source(source_model)
-    lines = [_to_domain_line(m) for m in line_models]
-    config = generate_crawler_config(source, lines, overrides=overrides)
-    runner = CrawlerRunner(config)
-    return await runner.run()
+    """调用 crawler 库执行采集（以 ``Crawler`` 为入口）。"""
+    source = _to_domain_source(source_model, line_models)
+    return await Crawler.run_source(source, overrides=overrides or {})
 
 
 def trigger_crawl(

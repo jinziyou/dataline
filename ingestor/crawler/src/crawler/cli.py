@@ -15,11 +15,9 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from crawler.models.source import Source, Line, SourceType
-from crawler.models.execution import CrawlerConfig
-from crawler.config.generator import generate_crawler_config
 from crawler.config.presets import list_presets
-from crawler.engine.runner import CrawlerRunner
+from crawler.crawler import Crawler, CrawlerConfig
+from crawler.source import Source, SourceType
 
 console = Console()
 
@@ -55,29 +53,25 @@ def run(
     if config_file:
         with open(config_file) as f:
             raw = json.load(f)
-        crawler_config = CrawlerConfig.model_validate(raw)
+        crawler_inst = Crawler(CrawlerConfig.model_validate(raw))
     elif source_url:
-        source = Source(
-            id="cli-source",
-            name=source_url,
-            type=SourceType(source_type),
-            url=source_url,
+        crawler_inst = Crawler.from_source(
+            Source(
+                id="cli-source",
+                name=source_url,
+                type=SourceType(source_type),
+                url=source_url,
+            )
         )
-        line = Line(
-            id="cli-line-0",
-            source_id=source.id,
-            name="default",
-            url=source_url,
-        )
-        crawler_config = generate_crawler_config(source, [line])
     else:
         console.print("[red]请提供 --config 或 --source-url 参数[/red]")
         raise SystemExit(1)
 
-    console.print(f"[bold]Starting crawler:[/bold] {crawler_config.crawler_id}")
-    console.print(f"  Source: {crawler_config.source_id} ({len(crawler_config.tasks)} tasks)")
+    cc = crawler_inst.config
+    console.print(f"[bold]Starting crawler:[/bold] {cc.crawler_id}")
+    console.print(f"  Source: {cc.source_id} ({len(cc.tasks)} tasks)")
 
-    result = asyncio.run(CrawlerRunner(crawler_config).run())
+    result = asyncio.run(crawler_inst.run())
 
     result_data = result.model_dump(mode="json")
     if output:

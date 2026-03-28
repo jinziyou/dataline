@@ -4,14 +4,46 @@
 
 ### Docker 部署（推荐）
 
+编排文件位于各子项目内：`ingestor/compose.yaml`、`admin/compose.yaml`。仓库根目录 **不再提供** 合并用的 `docker-compose.yml`，请用脚本或直接 `docker compose -f` 部署。
+
+**一键完整栈（ingestor + admin + PostgreSQL）：**
+
 ```bash
-cp .env.example .env
-docker compose up -d
+cp .env.example .env   # 可选：按需编辑端口与密码
+./scripts/deploy-all.sh
+```
+
+或手动两步：
+
+```bash
+./scripts/deploy-ingestor.sh
+./scripts/deploy-admin.sh
 ```
 
 启动后访问：
 - admin 前端：http://localhost:3000
 - server API 文档：http://localhost:8000/docs
+
+`deploy-all.sh` / `deploy-admin.sh` 默认令 admin 构建时访问 `http://host.docker.internal:${SERVER_PORT:-8000}`（ingestor 需已把 API 映射到宿主机端口；`admin/compose.yaml` 已配置 `extra_hosts`）。
+
+**分开部署：**
+
+1. **仅 ingestor**  
+   ```bash
+   ./scripts/deploy-ingestor.sh
+   # 或：docker compose -f ingestor/compose.yaml up -d
+   # 或在 ingestor/ 目录：docker compose up -d
+   ```
+
+2. **仅 admin**（构建期需能访问 ingestor API）  
+   ```bash
+   ./scripts/deploy-admin.sh
+   # 或：ADMIN_BUILD_BACKEND_URL=https://api.example.com docker compose -f admin/compose.yaml up -d --build
+   ```
+
+admin 镜像在 **构建阶段** 读取 `BACKEND_URL`（`admin/Dockerfile` 的 `ARG`），与 `next.config.ts` 中 `/api` 反代一致；**更换 API 地址后需重新 build admin**。
+
+脚本位于 `scripts/deploy-ingestor.sh`、`scripts/deploy-admin.sh`、`scripts/deploy-all.sh`（需可执行：`chmod +x scripts/*.sh`）。
 
 ### 本地开发
 

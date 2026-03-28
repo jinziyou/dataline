@@ -9,6 +9,9 @@ RUN pnpm install --frozen-lockfile
 FROM base AS builder
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
+# 写入 next.config 中的 /api 反代目标；分部署时需指向可访问的 ingestor API 基地址（无尾斜杠）
+ARG BACKEND_URL=http://localhost:8000
+ENV BACKEND_URL=${BACKEND_URL}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm build

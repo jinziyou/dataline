@@ -1,3 +1,7 @@
+# 仅部署 ingestor：PostgreSQL + FastAPI server
+# 在仓库根目录执行：docker compose -f ingestor/compose.yaml up -d
+# 或在 ingestor 目录：docker compose up -d
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -18,31 +22,18 @@ services:
 
   server:
     build:
-      context: ./ingestor
+      context: .
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
       - "${SERVER_PORT:-8000}:8000"
     environment:
       DATALINE_DATABASE_URL: postgresql://${POSTGRES_USER:-dataline}:${POSTGRES_PASSWORD:-dataline}@postgres:5432/${POSTGRES_DB:-dataline}
-      DATALINE_CORS_ORIGINS: '["http://localhost:3000","http://admin:3000"]'
+      DATALINE_CORS_ORIGINS: ${DATALINE_CORS_ORIGINS:-'["http://localhost:3000"]'}
       DATALINE_DEBUG: ${DEBUG:-false}
     depends_on:
       postgres:
         condition: service_healthy
-
-  admin:
-    build:
-      context: ./admin
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    ports:
-      - "${ADMIN_PORT:-3000}:3000"
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:${SERVER_PORT:-8000}/api
-      BACKEND_URL: http://server:8000
-    depends_on:
-      - server
 
 volumes:
   pgdata:

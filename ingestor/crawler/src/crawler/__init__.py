@@ -1,22 +1,52 @@
 """
 crawler - 多源异类数据采集引擎
 
-提供 source->line->data 统一数据抽象与 crawler->task->data 执行模型，
-支持以库调用或命令行工具方式对外提供采集能力。
+领域模型为 ``Source``（内含 ``lines``）与 ``Line``；执行入口为 ``Crawler``
+（推荐 ``await Crawler.run_source(source)``，默认参数来自 ``source.crawl_defaults`` 与类型预设，可用 ``options`` / ``overrides`` 覆盖）。
+底层 ``build_crawler_config`` 等仍可按需直接使用。
 """
 
-from crawler.models.source import Source, Line, DataItem, SourceType
-from crawler.models.execution import CrawlerConfig, TaskConfig, TaskResult, CrawlerResult
-from crawler.engine.runner import CrawlerRunner
+from crawler.crawler import (
+    Crawler,
+    CrawlerBuildOptions,
+    CrawlerConfig,
+    CrawlerContext,
+    CrawlerResult,
+    Data,
+    DownloaderType,
+    Extractor,
+    PageExtractor,
+    TaskConfig,
+    TaskExecutor,
+    TaskResult,
+    TaskStatus,
+    build_crawler_config,
+    task_config_from_line,
+)
+from crawler.source import Line, Source, SourceType
+
+DataItem = Data
+CrawlerRunner = Crawler
 
 __all__ = [
-    "Source",
-    "Line",
-    "DataItem",
-    "SourceType",
+    "Crawler",
+    "CrawlerBuildOptions",
     "CrawlerConfig",
-    "TaskConfig",
-    "TaskResult",
+    "CrawlerContext",
     "CrawlerResult",
     "CrawlerRunner",
+    "Data",
+    "DataItem",
+    "DownloaderType",
+    "Extractor",
+    "Line",
+    "PageExtractor",
+    "Source",
+    "SourceType",
+    "TaskConfig",
+    "TaskExecutor",
+    "TaskResult",
+    "TaskStatus",
+    "build_crawler_config",
+    "task_config_from_line",
 ]
