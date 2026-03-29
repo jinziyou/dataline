@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader, PageShell } from "@/components/layout/page-frame";
 import type { CrawlerTask } from "@/types";
 import { listTasks } from "@/lib/api";
 
@@ -47,13 +48,12 @@ export default function ResultsPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">采集结果</h1>
-        <p className="text-muted-foreground">
-          查看采集任务的执行状态与结果统计
-        </p>
-      </div>
+    <PageShell>
+      <PageHeader
+        eyebrow="管理"
+        title="采集结果"
+        description="查看采集任务的执行状态与结果统计"
+      />
 
       <Card>
         <CardHeader>
@@ -115,6 +115,6 @@ export default function ResultsPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </PageShell>
   );
 }

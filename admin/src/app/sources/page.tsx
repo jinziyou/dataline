@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader, PageShell } from "@/components/layout/page-frame";
 import type { Source } from "@/types";
 import { listSources } from "@/lib/api";
 
@@ -42,23 +43,18 @@ export default function SourcesPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">数据源管理</h1>
-          <p className="text-muted-foreground">
-            管理数据源配置与数据通道
-          </p>
-        </div>
-        <Button>新增数据源</Button>
-      </div>
+    <PageShell>
+      <PageHeader
+        eyebrow="管理"
+        title="数据源管理"
+        description="管理数据源配置与数据通道"
+        actions={<Button>新增数据源</Button>}
+      />
 
       <Card>
         <CardHeader>
           <CardTitle>数据源列表</CardTitle>
-          <CardDescription>
-            当前系统中已配置的所有数据源
-          </CardDescription>
+          <CardDescription>当前系统中已配置的所有数据源</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -107,6 +103,6 @@ export default function SourcesPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </PageShell>
   );
 }

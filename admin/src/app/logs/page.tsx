@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader, PageShell } from "@/components/layout/page-frame";
 import type { CrawlerLog } from "@/types";
 import { listLogs } from "@/lib/api";
 
@@ -40,13 +41,12 @@ export default function LogsPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">运行日志</h1>
-        <p className="text-muted-foreground">
-          查看 Crawler 采集过程中的运行日志
-        </p>
-      </div>
+    <PageShell>
+      <PageHeader
+        eyebrow="管理"
+        title="运行日志"
+        description="查看 Crawler 采集过程中的运行日志"
+      />
 
       <Card>
         <CardHeader>
@@ -98,6 +98,6 @@ export default function LogsPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </PageShell>
   );
 }

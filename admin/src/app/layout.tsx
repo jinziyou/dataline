@@ -1,18 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -26,22 +21,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="zh-CN"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
+    <html lang="zh-CN" className={`${inter.variable} h-full`}>
+      <body className={`${inter.className} min-h-full flex flex-col`}>
         <TooltipProvider>
           <SidebarProvider>
             <AppSidebar />
-            <main className="flex-1">
-              <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="flex h-14 items-center gap-4 px-6">
-                  <SidebarTrigger />
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+              <header className="sticky top-0 z-50 border-b border-border/80 bg-background/75 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+                <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-3 px-4 sm:px-6">
+                  <SidebarTrigger className="shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold tracking-tight text-foreground">
+                      DataLine
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      多源异类数据采集汇聚
+                    </p>
+                  </div>
                 </div>
               </header>
-              <div className="p-6">{children}</div>
-            </main>
+              <main className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</main>
+            </div>
           </SidebarProvider>
         </TooltipProvider>
       </body>

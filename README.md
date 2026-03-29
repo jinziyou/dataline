@@ -43,7 +43,7 @@ cp .env.example .env   # 可选：按需编辑端口与密码
 
 admin 镜像在 **构建阶段** 读取 `BACKEND_URL`（`admin/Dockerfile` 的 `ARG`），与 `next.config.ts` 中 `/api` 反代一致；**更换 API 地址后需重新 build admin**。
 
-脚本位于 `scripts/deploy-ingestor.sh`、`scripts/deploy-admin.sh`、`scripts/deploy-all.sh`（需可执行：`chmod +x scripts/*.sh`）。
+脚本为 **POSIX sh**（`#!/bin/sh`，`set -eu`），在**仓库根目录**执行：`sh scripts/deploy-all.sh` 或 `./scripts/deploy-all.sh`（后者需 `chmod +x scripts/*.sh`）。仓库已用 `.gitattributes` 要求 `*.sh` 使用 **LF**；若在 Windows 编辑后仍出现 `set: Illegal option` 或 `: not found`，多为 **CRLF 行尾**，可执行 `sed -i 's/\r$//' scripts/*.sh` 修复。
 
 ### 本地开发
 
