@@ -1,7 +1,7 @@
 # crawler
 
 多源异类数据采集引擎（Python 库 + CLI）。用统一的领域模型描述「采什么」，用 `Crawler` 作为执行入口完成「怎么采」。
-
+采用 TDD 与 DDD：两个有界上下文——**`source`（采什么）** 与 **`crawler`（怎么采）**；`config` 不作为独立领域包。
 ## 核心概念
 
 ### 数据抽象：`Source` → `Line` → `Data`
@@ -45,11 +45,11 @@ result = await Crawler.run_source(source)
 
 ### 默认与覆盖参数
 
-- **`Source.crawl_defaults`**：字典，键与 `CrawlerBuildOptions` 一致（如 `timeout`、`headers`、`downloader` 等），相对 **按 `Source.type` 的预设**（`config/presets.py`）做默认覆盖。
+- **数据源级采集默认项**：放在 `Source.meta` 的 **`SOURCE_CRAWLER_BUILD_OPTIONS_META_KEY`**（字面量键名 `"crawler_build_options"`；值为字典，字段与 `CrawlerBuildOptions` 一致，如 `timeout`、`headers`、`downloader`），相对 **按 `Source.type` 的类型预设**（`crawler.source.presets`）再覆盖。
 - 单次运行可再传 **`options`**（`CrawlerBuildOptions`）或 **`overrides`**（字典）。
 
-**合并优先级（从低到高）：** 类型预设 → `crawl_defaults` → 本次 `options` → 本次 `overrides`。  
-其中 **`headers` 在 `crawl_defaults` 与 `options` 之间按 key 合并**，不是整表覆盖。
+**合并优先级（从低到高）：** 类型预设 → `meta[SOURCE_CRAWLER_BUILD_OPTIONS_META_KEY]` → 本次 `options` → 本次 `overrides`。  
+其中 **`headers` 在 meta 块与 `options` 之间按 key 合并**，不是整表覆盖。
 
 ### 已有 `CrawlerConfig`（如 JSON）
 
@@ -81,13 +81,12 @@ crawler presets
 
 | 路径 | 职责 |
 |------|------|
-| `crawler.source` | `Source`、`Line` 领域模型 |
+| `crawler.source` | `Source`、`Line`、按 `SourceType` 的 **类型预设**（`presets`） |
 | `crawler.crawler` | `Crawler`、`CrawlerConfig`、`TaskExecutor`、`Data`、`Extractor` 等 |
-| `crawler.config.presets` | 按 `SourceType` 的默认采集参数模板 |
-| `crawler.downloaders` | HTTP 等下载器实现 |
-| `crawler.cli` | Click CLI |
+| `crawler.crawler.downloaders` | HTTP 等下载器实现（执行子域内） |
+| `crawler.cli` | 应用层 CLI |
 
-`Line.meta` 中若含整数 **`max_items`**，生成 `TaskConfig` 时会写入 **`max_items`** 且不会进入 `params`。
+`Line.item_limit` 会映射为执行侧 `TaskConfig.max_items`；`Line.meta` 仅进入任务 `params`，由业务自行约定。
 
 ## 测试目录
 

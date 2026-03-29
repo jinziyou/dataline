@@ -2,7 +2,6 @@
 数据源模型：Source
 
 一个数据源整体（如某个网站、某个 API 服务），包含若干 Line（数据通道）。
-采集默认参数放在 ``crawl_defaults``（键与 ``CrawlerBuildOptions`` 一致），执行时由 ``Crawler`` 与类型预设合并，并可用当次 ``options`` / ``overrides`` 再覆盖。
 """
 
 from __future__ import annotations
@@ -37,10 +36,6 @@ class Source(BaseModel):
     lines: list[Line] = Field(
         default_factory=list,
         description="下属数据通道列表，至少一条；未指定时自动创建默认 Line（url 与 source.url 一致）",
-    )
-    crawl_defaults: dict[str, Any] | None = Field(
-        default=None,
-        description="采集默认覆盖（相对类型预设），键与 CrawlerBuildOptions 一致，如 timeout、headers、downloader",
     )
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)

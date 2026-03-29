@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import httpx
 
-from crawler.downloaders.base import BaseDownloader, DownloadResponse
+from crawler.crawler.downloaders.base import BaseDownloader, DownloadResponse
 
 
 class HttpDownloader(BaseDownloader):

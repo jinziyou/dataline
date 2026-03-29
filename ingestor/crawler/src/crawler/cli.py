@@ -15,7 +15,7 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from crawler.config.presets import list_presets
+from crawler.source.presets import list_presets
 from crawler.crawler import Crawler, CrawlerConfig
 from crawler.source import Source, SourceType
 

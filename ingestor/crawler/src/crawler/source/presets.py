@@ -1,22 +1,25 @@
 """
-预设配置模板
+按 SourceType 的默认采集参数模板（source 领域）
 
-为五大类数据源提供默认采集参数，降低接入成本。
-用户只需提供最小必要参数（如地址、类型），系统自动补齐通用配置。
+取值与 crawler 领域的 DownloaderType 对齐，此处用字面量类型避免 source 依赖 crawler。
 """
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
-from crawler.crawler import DownloaderType
-from crawler.source import SourceType
+from crawler.source.source import SourceType
+
+CrawlerDownloaderId = Literal["http", "playwright"]
 
 
 class SourcePreset(BaseModel):
-    """数据源预设配置模板"""
+    """数据源类型维度的推荐采集默认值（聚合根 Source 之外的类型级策略）"""
+
     source_type: SourceType
-    downloader: DownloaderType = DownloaderType.HTTP
+    downloader: CrawlerDownloaderId = "http"
     headers: dict[str, str] = Field(default_factory=dict)
     timeout: float = 30.0
     retry_max: int = 3
@@ -30,7 +33,7 @@ class SourcePreset(BaseModel):
 _PRESETS: dict[SourceType, SourcePreset] = {
     SourceType.WEBSITE: SourcePreset(
         source_type=SourceType.WEBSITE,
-        downloader=DownloaderType.HTTP,
+        downloader="http",
         headers={
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -50,7 +53,7 @@ _PRESETS: dict[SourceType, SourcePreset] = {
     ),
     SourceType.API: SourcePreset(
         source_type=SourceType.API,
-        downloader=DownloaderType.HTTP,
+        downloader="http",
         headers={
             "Accept": "application/json",
             "Content-Type": "application/json",
@@ -65,7 +68,7 @@ _PRESETS: dict[SourceType, SourcePreset] = {
     ),
     SourceType.FILE: SourcePreset(
         source_type=SourceType.FILE,
-        downloader=DownloaderType.HTTP,
+        downloader="http",
         headers={},
         timeout=120.0,
         retry_max=2,
@@ -77,7 +80,7 @@ _PRESETS: dict[SourceType, SourcePreset] = {
     ),
     SourceType.STREAM: SourcePreset(
         source_type=SourceType.STREAM,
-        downloader=DownloaderType.HTTP,
+        downloader="http",
         headers={},
         timeout=0,
         retry_max=5,
@@ -89,7 +92,7 @@ _PRESETS: dict[SourceType, SourcePreset] = {
     ),
     SourceType.EXTERNAL: SourcePreset(
         source_type=SourceType.EXTERNAL,
-        downloader=DownloaderType.HTTP,
+        downloader="http",
         headers={},
         timeout=60.0,
         retry_max=3,
@@ -103,10 +106,8 @@ _PRESETS: dict[SourceType, SourcePreset] = {
 
 
 def get_preset(source_type: SourceType) -> SourcePreset:
-    """获取指定数据源类型的预设配置"""
     return _PRESETS[source_type]
 
 
 def list_presets() -> dict[SourceType, SourcePreset]:
-    """列出所有预设配置"""
     return dict(_PRESETS)

@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from crawler.crawler import PageExtractor
-from crawler.downloaders.base import DownloadResponse
+from crawler.crawler.downloaders.base import DownloadResponse
 
 
 @pytest.mark.asyncio

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from crawler import SOURCE_CRAWLER_BUILD_OPTIONS_META_KEY
 from crawler.crawler import CrawlerBuildOptions, DownloaderType, build_crawler_config
 from crawler.source import Line, Source, SourceType
 
@@ -56,13 +57,18 @@ def test_crawler_build_options_override_preset() -> None:
     assert cfg.headers["X-Custom"] == "yes"
 
 
-def test_crawl_defaults_on_source_merged_then_options_then_overrides() -> None:
+def test_source_meta_crawler_build_options_merged_then_options_then_overrides() -> None:
     source = Source(
         id="s1",
         name="W",
         type=SourceType.WEBSITE,
         lines=[Line(id="l1", source_id="s1", name="p", url="https://w.test/p")],
-        crawl_defaults={"timeout": 50.0, "headers": {"X-A": "1"}},
+        meta={
+            SOURCE_CRAWLER_BUILD_OPTIONS_META_KEY: {
+                "timeout": 50.0,
+                "headers": {"X-A": "1"},
+            }
+        },
     )
     cfg = build_crawler_config(
         source,

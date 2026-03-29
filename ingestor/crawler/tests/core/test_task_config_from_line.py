@@ -6,14 +6,14 @@ from crawler.crawler import task_config_from_line
 from crawler.source import Line
 
 
-def test_meta_max_items_maps_to_task_config() -> None:
+def test_item_limit_maps_to_task_config() -> None:
     line = Line(
         id="l1",
         source_id="s1",
         name="x",
         url="https://x.test",
-        meta={"max_items": 3},
+        item_limit=3,
     )
     tc = task_config_from_line(line)
     assert tc.max_items == 3
-    assert "max_items" not in tc.params
+    assert tc.params == {}

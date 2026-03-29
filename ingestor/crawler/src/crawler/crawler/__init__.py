@@ -5,6 +5,7 @@ crawler 子包：crawler -> task -> data 执行侧对象
 """
 
 from crawler.crawler.crawler import (
+    SOURCE_CRAWLER_BUILD_OPTIONS_META_KEY,
     Crawler,
     CrawlerBuildOptions,
     CrawlerConfig,
@@ -22,6 +23,7 @@ from crawler.crawler.extractor import Extractor, PageExtractor
 from crawler.crawler.task import TaskConfig, TaskExecutor, TaskResult, TaskStatus
 
 __all__ = [
+    "SOURCE_CRAWLER_BUILD_OPTIONS_META_KEY",
     "Crawler",
     "CrawlerBuildOptions",
     "CrawlerConfig",

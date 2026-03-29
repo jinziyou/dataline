@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from crawler.downloaders.base import BaseDownloader, DownloadResponse
+from crawler.crawler.downloaders.base import BaseDownloader, DownloadResponse
 
 
 class StubDownloader(BaseDownloader):

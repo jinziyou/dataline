@@ -10,7 +10,7 @@ import uuid
 from typing import Protocol, runtime_checkable
 
 from crawler.crawler.data import Data
-from crawler.downloaders.base import DownloadResponse
+from crawler.crawler.downloaders.base import DownloadResponse
 
 
 @runtime_checkable

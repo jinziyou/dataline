@@ -15,12 +15,15 @@ from typing import Any, Iterable, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from crawler.downloaders.base import BaseDownloader
-from crawler.downloaders.http import HttpDownloader
+from crawler.crawler.downloaders.base import BaseDownloader
+from crawler.crawler.downloaders.http import HttpDownloader
 from crawler.source.line import Line
 from crawler.source.source import Source
 
 logger = logging.getLogger(__name__)
+
+# Source.meta 中存放与 CrawlerBuildOptions 字段兼容的字典；仅 crawler 层解释，source 领域模型不声明该键。
+SOURCE_CRAWLER_BUILD_OPTIONS_META_KEY = "crawler_build_options"
 
 
 class DownloaderType(str, Enum):
@@ -203,7 +206,7 @@ class Crawler:
     """
     采集能力与功能入口：对应单个 Source 下所有 Task 的执行。
 
-    推荐从领域模型启动（核心入口）；``Source`` 应携带 ``lines``，默认采集参数在 ``source.crawl_defaults``，本次运行可用 ``options`` / ``overrides`` 再覆盖::
+    推荐从领域模型启动（核心入口）；``Source`` 应携带 ``lines``。若需在数据源上挂接采集引擎默认项，将兼容 ``CrawlerBuildOptions`` 的字典放在 ``source.meta[SOURCE_CRAWLER_BUILD_OPTIONS_META_KEY]``；当次运行仍可用 ``options`` / ``overrides`` 再覆盖::
 
         result = await Crawler.run_source(source, overrides={...})
 
@@ -307,29 +310,18 @@ class Crawler:
 
 
 def task_config_from_line(line: Line) -> "TaskConfig":
-    """
-    由 Line 生成 TaskConfig。
-
-    ``line.meta`` 中若存在整数键 ``max_items``，会写入 ``TaskConfig.max_items`` 且不会进入 ``params``。
-    """
+    """由 Line 生成 TaskConfig；``line.item_limit`` 映射为任务级条数上限。"""
     import uuid
 
     from crawler.crawler.task import TaskConfig
-
-    meta = dict(line.meta)
-    max_items: int | None = None
-    if "max_items" in meta:
-        raw = meta.pop("max_items")
-        if isinstance(raw, int):
-            max_items = raw
 
     return TaskConfig(
         task_id=f"task-{uuid.uuid4().hex[:12]}",
         line_id=line.id,
         line_name=line.name,
         url=line.url,
-        params=meta,
-        max_items=max_items,
+        params=dict(line.meta),
+        max_items=line.item_limit,
     )
 
 
@@ -337,8 +329,9 @@ def _merged_build_options(
     source: Source,
     options: CrawlerBuildOptions | None,
 ) -> CrawlerBuildOptions | None:
-    """``source.crawl_defaults`` 与本次 ``options`` 合并（后者覆盖前者；``headers`` 字典逐键合并）。"""
-    raw = dict(source.crawl_defaults or {})
+    """``source.meta`` 中采集引擎默认项与本次 ``options`` 合并（后者覆盖前者；``headers`` 逐键合并）。"""
+    block = source.meta.get(SOURCE_CRAWLER_BUILD_OPTIONS_META_KEY)
+    raw = dict(block) if isinstance(block, dict) else {}
     headers: dict[str, str] = dict(raw.pop("headers", None) or {})
 
     if options is not None:
@@ -367,11 +360,11 @@ def build_crawler_config(
 
     ``lines`` 为 ``None`` 时使用 ``source.lines``；否则使用传入列表（便于临时覆盖当次任务集）。
 
-    优先级：``overrides`` > 本次 ``options`` > ``source.crawl_defaults`` > 按 ``source.type`` 的预设。
+    优先级：``overrides`` > 本次 ``options`` > ``source.meta[SOURCE_CRAWLER_BUILD_OPTIONS_META_KEY]`` > 按 ``source.type`` 的预设。
     """
     import uuid
 
-    from crawler.config.presets import get_preset
+    from crawler.source.presets import get_preset
 
     preset = get_preset(source.type)
     overrides = overrides or {}
@@ -398,7 +391,7 @@ def build_crawler_config(
         crawler_id=f"crawler-{uuid.uuid4().hex[:12]}",
         source_id=source.id,
         source_name=source.name,
-        downloader=pick("downloader", preset.downloader),
+        downloader=pick("downloader", DownloaderType(preset.downloader)),
         tasks=tasks,
         headers=headers,
         timeout=pick("timeout", preset.timeout),
