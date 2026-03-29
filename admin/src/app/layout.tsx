@@ -13,6 +13,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "DataLine - 多源异类数据采集汇聚系统",
   description: "可视化管理采集配置、采集结果和日志",
+  icons: {
+    icon: "/logo.svg",
+  },
 };
 
 export default function RootLayout({
@@ -30,6 +33,15 @@ export default function RootLayout({
               <header className="sticky top-0 z-50 border-b border-border/80 bg-background/75 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
                 <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-3 px-4 sm:px-6">
                   <SidebarTrigger className="shrink-0" />
+                  {/* eslint-disable-next-line @next/next/no-img-element -- static SVG from /public */}
+                  <img
+                    src="/logo.svg"
+                    alt=""
+                    width={32}
+                    height={32}
+                    className="size-8 shrink-0"
+                    aria-hidden
+                  />
                   <div className="min-w-0">
                     <p className="text-sm font-semibold tracking-tight text-foreground">
                       DataLine

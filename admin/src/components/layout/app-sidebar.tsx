@@ -27,13 +27,24 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="border-b border-border/80 px-5 py-4">
-        <Link href="/" className="flex flex-col gap-0.5">
-          <span className="text-lg font-semibold tracking-tight text-foreground">
-            DataLine
-          </span>
-          <span className="text-xs text-muted-foreground">
-            多源异类数据采集汇聚系统
-          </span>
+        <Link href="/" className="flex items-start gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static SVG from /public */}
+          <img
+            src="/logo.svg"
+            alt=""
+            width={36}
+            height={36}
+            className="mt-0.5 size-9 shrink-0"
+            aria-hidden
+          />
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-lg font-semibold tracking-tight text-foreground">
+              DataLine
+            </span>
+            <span className="text-xs text-muted-foreground">
+              多源异类数据采集汇聚系统
+            </span>
+          </div>
         </Link>
       </SidebarHeader>
       <SidebarContent className="px-2 pt-2">
