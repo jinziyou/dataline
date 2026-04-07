@@ -2,11 +2,14 @@
 crawler - 多源异类数据采集引擎
 
 领域模型为 ``Source``（内含 ``lines``）与 ``Line``；执行入口为 ``Crawler``
-（推荐 ``await Crawler.run_source(source)``；数据源级采集默认项见 ``SOURCE_CRAWLER_BUILD_OPTIONS_META_KEY``，并与类型预设、``options`` / ``overrides`` 合并）。
-底层 ``build_crawler_config`` 等仍可按需直接使用。
+（推荐 ``await Crawler.run_source(source)``）。
+
+Extractor 管线：``LinkExtractor``（链接发现，一个或多个）→ ``DataExtractor``（数据提取）。
+``DensityBasedDetector`` 可自动从页面推导选择器。
 """
 
 from crawler.crawler import (
+    EXTRACTOR_CONFIG_META_KEY,
     SOURCE_CRAWLER_BUILD_OPTIONS_META_KEY,
     Crawler,
     CrawlerBuildOptions,
@@ -14,8 +17,13 @@ from crawler.crawler import (
     CrawlerContext,
     CrawlerResult,
     Data,
+    DataExtractor,
+    DensityBasedDetector,
+    DetectedSelectors,
     DownloaderType,
     Extractor,
+    ExtractorConfig,
+    LinkExtractor,
     PageExtractor,
     TaskConfig,
     TaskExecutor,
@@ -30,6 +38,7 @@ DataItem = Data
 CrawlerRunner = Crawler
 
 __all__ = [
+    "EXTRACTOR_CONFIG_META_KEY",
     "SOURCE_CRAWLER_BUILD_OPTIONS_META_KEY",
     "Crawler",
     "CrawlerBuildOptions",
@@ -38,10 +47,15 @@ __all__ = [
     "CrawlerResult",
     "CrawlerRunner",
     "Data",
+    "DataExtractor",
     "DataItem",
+    "DensityBasedDetector",
+    "DetectedSelectors",
     "DownloaderType",
     "Extractor",
+    "ExtractorConfig",
     "Line",
+    "LinkExtractor",
     "PageExtractor",
     "Source",
     "SourceType",

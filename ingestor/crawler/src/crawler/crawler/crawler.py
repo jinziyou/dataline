@@ -25,6 +25,9 @@ logger = logging.getLogger(__name__)
 # Source.meta 中存放与 CrawlerBuildOptions 字段兼容的字典；仅 crawler 层解释，source 领域模型不声明该键。
 SOURCE_CRAWLER_BUILD_OPTIONS_META_KEY = "crawler_build_options"
 
+# Line.meta 中存放与 ExtractorConfig 字段兼容的字典，由 task_config_from_line 消费。
+EXTRACTOR_CONFIG_META_KEY = "extractor_config"
+
 
 class DownloaderType(str, Enum):
     """下载器类型"""
@@ -310,18 +313,34 @@ class Crawler:
 
 
 def task_config_from_line(line: Line) -> "TaskConfig":
-    """由 Line 生成 TaskConfig；``line.item_limit`` 映射为任务级条数上限。"""
+    """
+    由 Line 生成 TaskConfig。
+
+    ``line.item_limit`` 映射为任务级条数上限；
+    ``line.meta[EXTRACTOR_CONFIG_META_KEY]`` 若存在则解析为 ExtractorConfig，
+    其余 meta 字段进入 ``params``。
+    """
     import uuid
 
-    from crawler.crawler.task import TaskConfig
+    from crawler.crawler.task import ExtractorConfig, TaskConfig
+
+    extractor_meta = line.meta.get(EXTRACTOR_CONFIG_META_KEY)
+    extractor_config = (
+        ExtractorConfig.model_validate(extractor_meta)
+        if isinstance(extractor_meta, dict) and extractor_meta
+        else ExtractorConfig()
+    )
+
+    params = {k: v for k, v in line.meta.items() if k != EXTRACTOR_CONFIG_META_KEY}
 
     return TaskConfig(
         task_id=f"task-{uuid.uuid4().hex[:12]}",
         line_id=line.id,
         line_name=line.name,
         url=line.url,
-        params=dict(line.meta),
+        params=params,
         max_items=line.item_limit,
+        extractors=extractor_config,
     )
 
 
@@ -423,6 +442,7 @@ __all__ = [
     "CrawlerResult",
     "DownloaderType",
     "DeduplicationStrategy",
+    "EXTRACTOR_CONFIG_META_KEY",
     "RateLimiter",
     "UrlDeduplicator",
     "build_crawler_config",

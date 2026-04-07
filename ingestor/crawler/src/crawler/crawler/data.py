@@ -20,6 +20,7 @@ class Data(BaseModel):
     url: str | None = Field(default=None, description="数据来源地址")
     title: str = Field(default="", description="数据标题")
     content: str = Field(default="", description="数据内容")
+    published_at: datetime | None = Field(default=None, description="发布时间（由 DataExtractor 提取）")
     content_type: str = Field(default="text/html", description="内容类型")
     raw: dict[str, Any] = Field(default_factory=dict, description="原始数据")
     meta: dict[str, Any] = Field(default_factory=dict, description="扩展元数据")

@@ -96,7 +96,7 @@ def presets() -> None:
     for _, preset in list_presets().items():
         table.add_row(
             preset.source_type.value,
-            preset.downloader.value,
+            str(preset.downloader),
             str(preset.concurrency),
             str(preset.timeout),
             str(preset.rate_limit or "无"),

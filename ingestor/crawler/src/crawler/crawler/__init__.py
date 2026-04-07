@@ -1,28 +1,46 @@
 """
-crawler 子包：crawler -> task -> data 执行侧对象
+crawler 子包：crawler -> task -> extractor 执行侧对象
 
 ``Crawler`` 为功能主入口（``run_source`` / ``from_source``）；其余为配置与执行单元模型。
 """
 
 from crawler.crawler.crawler import (
+    EXTRACTOR_CONFIG_META_KEY,
     SOURCE_CRAWLER_BUILD_OPTIONS_META_KEY,
     Crawler,
     CrawlerBuildOptions,
     CrawlerConfig,
     CrawlerContext,
     CrawlerResult,
-    DownloaderType,
     DeduplicationStrategy,
+    DownloaderType,
     RateLimiter,
     UrlDeduplicator,
     build_crawler_config,
     task_config_from_line,
 )
 from crawler.crawler.data import Data
-from crawler.crawler.extractor import Extractor, PageExtractor
-from crawler.crawler.task import TaskConfig, TaskExecutor, TaskResult, TaskStatus
+from crawler.crawler.density import (
+    DensityBasedDetector,
+    DetectedSelectors,
+    SelectorDetector,
+)
+from crawler.crawler.extractor import (
+    DataExtractor,
+    Extractor,
+    LinkExtractor,
+    PageExtractor,
+)
+from crawler.crawler.task import (
+    ExtractorConfig,
+    TaskConfig,
+    TaskExecutor,
+    TaskResult,
+    TaskStatus,
+)
 
 __all__ = [
+    "EXTRACTOR_CONFIG_META_KEY",
     "SOURCE_CRAWLER_BUILD_OPTIONS_META_KEY",
     "Crawler",
     "CrawlerBuildOptions",
@@ -30,11 +48,17 @@ __all__ = [
     "CrawlerContext",
     "CrawlerResult",
     "Data",
-    "DownloaderType",
+    "DataExtractor",
     "DeduplicationStrategy",
+    "DensityBasedDetector",
+    "DetectedSelectors",
+    "DownloaderType",
     "Extractor",
+    "ExtractorConfig",
+    "LinkExtractor",
     "PageExtractor",
     "RateLimiter",
+    "SelectorDetector",
     "TaskConfig",
     "TaskExecutor",
     "TaskResult",
