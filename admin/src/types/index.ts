@@ -10,6 +10,7 @@ export interface Source {
   meta: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+  line_count: number;
 }
 
 export interface Line {
@@ -27,6 +28,7 @@ export interface Line {
 export interface CrawlerTask {
   id: string;
   source_id: string;
+  source_name: string;
   status: "pending" | "running" | "success" | "failed";
   config: Record<string, unknown>;
   total_items: number;
@@ -59,4 +61,35 @@ export interface CrawlerLog {
   level: string;
   message: string;
   created_at: string;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface TaskStatusCounts {
+  pending: number;
+  running: number;
+  success: number;
+  failed: number;
+}
+
+export interface StatsOverview {
+  source_count: number;
+  enabled_source_count: number;
+  task_count: number;
+  task_status_counts: TaskStatusCounts;
+  total_collected_items: number;
+  log_count: number;
+  recent_tasks: {
+    id: string;
+    source_id: string;
+    source_name: string;
+    status: string;
+    total_items: number;
+    created_at: string;
+  }[];
 }

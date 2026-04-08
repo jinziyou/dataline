@@ -3,7 +3,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 
 from server.core.database import get_session
 from server.models.source import SourceModel, LineModel
@@ -19,37 +19,48 @@ from server.schemas.source import (
 router = APIRouter(prefix="/sources", tags=["sources"])
 
 
+def _enrich_source(session: Session, source: SourceModel) -> SourceRead:
+    line_count = session.exec(
+        select(func.count()).select_from(LineModel).where(LineModel.source_id == source.id)
+    ).one()
+    return SourceRead(
+        **source.model_dump(),
+        line_count=line_count,
+    )
+
+
 @router.get("", response_model=list[SourceRead])
 def list_sources(
     enabled: bool | None = None,
     session: Session = Depends(get_session),
-) -> list[SourceModel]:
+) -> list[SourceRead]:
     stmt = select(SourceModel)
     if enabled is not None:
         stmt = stmt.where(SourceModel.enabled == enabled)
-    return list(session.exec(stmt).all())
+    sources = list(session.exec(stmt).all())
+    return [_enrich_source(session, s) for s in sources]
 
 
 @router.get("/{source_id}", response_model=SourceRead)
-def get_source(source_id: str, session: Session = Depends(get_session)) -> SourceModel:
+def get_source(source_id: str, session: Session = Depends(get_session)) -> SourceRead:
     source = session.get(SourceModel, source_id)
     if not source:
         raise HTTPException(404, "Source not found")
-    return source
+    return _enrich_source(session, source)
 
 
 @router.post("", response_model=SourceRead, status_code=201)
 def create_source(
     body: SourceCreate,
     session: Session = Depends(get_session),
-) -> SourceModel:
+) -> SourceRead:
     if session.get(SourceModel, body.id):
         raise HTTPException(409, "Source already exists")
     source = SourceModel.model_validate(body)
     session.add(source)
     session.commit()
     session.refresh(source)
-    return source
+    return _enrich_source(session, source)
 
 
 @router.patch("/{source_id}", response_model=SourceRead)
@@ -57,7 +68,7 @@ def update_source(
     source_id: str,
     body: SourceUpdate,
     session: Session = Depends(get_session),
-) -> SourceModel:
+) -> SourceRead:
     source = session.get(SourceModel, source_id)
     if not source:
         raise HTTPException(404, "Source not found")
@@ -68,7 +79,7 @@ def update_source(
     session.add(source)
     session.commit()
     session.refresh(source)
-    return source
+    return _enrich_source(session, source)
 
 
 @router.delete("/{source_id}", status_code=204)

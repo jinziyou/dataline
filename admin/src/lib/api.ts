@@ -3,8 +3,10 @@ import type {
   CrawlerLog,
   CrawlerTask,
   Line,
+  PaginatedResponse,
   Source,
   SourceType,
+  StatsOverview,
 } from "@/types";
 
 function apiBase(): string {
@@ -121,8 +123,8 @@ export function listTasks(params?: {
   status?: string;
   limit?: number;
   offset?: number;
-}): Promise<CrawlerTask[]> {
-  return fetchJson<CrawlerTask[]>(`/tasks${qs(params ?? {})}`);
+}): Promise<PaginatedResponse<CrawlerTask>> {
+  return fetchJson<PaginatedResponse<CrawlerTask>>(`/tasks${qs(params ?? {})}`);
 }
 
 export function getTask(id: string): Promise<CrawlerTask> {
@@ -151,6 +153,12 @@ export function listLogs(params?: {
   level?: string;
   limit?: number;
   offset?: number;
-}): Promise<CrawlerLog[]> {
-  return fetchJson<CrawlerLog[]>(`/logs${qs(params ?? {})}`);
+}): Promise<PaginatedResponse<CrawlerLog>> {
+  return fetchJson<PaginatedResponse<CrawlerLog>>(`/logs${qs(params ?? {})}`);
+}
+
+// ── Stats ──
+
+export function getStats(): Promise<StatsOverview> {
+  return fetchJson<StatsOverview>("/stats");
 }

@@ -1,27 +1,26 @@
-FROM node:22-alpine AS base
+# bookworm-slim：glibc，与 @next/swc-linux-x64-gnu 一致；Alpine(musl) 会触发 EBADPLATFORM
+FROM node:22-bookworm-slim AS base
 
 FROM base AS deps
-RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package.json package-lock.json ./
+RUN npm ci
 
 FROM base AS builder
-RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 # 写入 next.config 中的 /api 反代目标；分部署时需指向可访问的 ingestor API 基地址（无尾斜杠）
 ARG BACKEND_URL=http://localhost:8000
 ENV BACKEND_URL=${BACKEND_URL}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN pnpm build
+RUN npm run build
 
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+RUN groupadd --system --gid 1001 nodejs && \
+    useradd --system --uid 1001 --gid nodejs nextjs
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./

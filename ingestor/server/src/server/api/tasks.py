@@ -1,22 +1,35 @@
 """采集任务 API：触发采集、查询任务状态与结果"""
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 
 from server.core.database import get_session
 from server.models.source import SourceModel, LineModel
 from server.models.task import CrawlerTaskModel, CollectedDataModel
-from server.schemas.task import CrawlerTaskRead, CrawlerTaskTrigger, CollectedDataRead
+from server.schemas.task import (
+    CrawlerTaskRead,
+    CrawlerTaskTrigger,
+    CollectedDataRead,
+    PaginatedResponse,
+)
 from server.services.crawler_service import trigger_crawl
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
+
+
+def _enrich_task(session: Session, task: CrawlerTaskModel) -> CrawlerTaskRead:
+    source = session.get(SourceModel, task.source_id)
+    return CrawlerTaskRead(
+        **task.model_dump(),
+        source_name=source.name if source else task.source_id,
+    )
 
 
 @router.post("", response_model=CrawlerTaskRead, status_code=201)
 def create_task(
     body: CrawlerTaskTrigger,
     session: Session = Depends(get_session),
-) -> CrawlerTaskModel:
+) -> CrawlerTaskRead:
     """触发一次采集任务"""
     source = session.get(SourceModel, body.source_id)
     if not source:
@@ -33,32 +46,41 @@ def create_task(
         raise HTTPException(400, "No enabled lines for this source")
 
     task = trigger_crawl(session, source, lines, body.overrides or None)
-    return task
+    return _enrich_task(session, task)
 
 
-@router.get("", response_model=list[CrawlerTaskRead])
+@router.get("", response_model=PaginatedResponse[CrawlerTaskRead])
 def list_tasks(
     source_id: str | None = None,
     status: str | None = None,
     limit: int = 50,
     offset: int = 0,
     session: Session = Depends(get_session),
-) -> list[CrawlerTaskModel]:
-    stmt = select(CrawlerTaskModel).order_by(CrawlerTaskModel.created_at.desc())
+) -> PaginatedResponse[CrawlerTaskRead]:
+    count_stmt = select(func.count()).select_from(CrawlerTaskModel)
+    data_stmt = select(CrawlerTaskModel).order_by(CrawlerTaskModel.created_at.desc())
     if source_id:
-        stmt = stmt.where(CrawlerTaskModel.source_id == source_id)
+        count_stmt = count_stmt.where(CrawlerTaskModel.source_id == source_id)
+        data_stmt = data_stmt.where(CrawlerTaskModel.source_id == source_id)
     if status:
-        stmt = stmt.where(CrawlerTaskModel.status == status)
-    stmt = stmt.offset(offset).limit(limit)
-    return list(session.exec(stmt).all())
+        count_stmt = count_stmt.where(CrawlerTaskModel.status == status)
+        data_stmt = data_stmt.where(CrawlerTaskModel.status == status)
+    total = session.exec(count_stmt).one()
+    tasks = list(session.exec(data_stmt.offset(offset).limit(limit)).all())
+    return PaginatedResponse(
+        items=[_enrich_task(session, t) for t in tasks],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get("/{task_id}", response_model=CrawlerTaskRead)
-def get_task(task_id: str, session: Session = Depends(get_session)) -> CrawlerTaskModel:
+def get_task(task_id: str, session: Session = Depends(get_session)) -> CrawlerTaskRead:
     task = session.get(CrawlerTaskModel, task_id)
     if not task:
         raise HTTPException(404, "Task not found")
-    return task
+    return _enrich_task(session, task)
 
 
 @router.get("/{task_id}/data", response_model=list[CollectedDataRead])

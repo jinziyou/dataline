@@ -32,6 +32,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader, PageShell } from "@/components/layout/page-frame";
 import type { Source, SourceType } from "@/types";
 import { listSources, createSource } from "@/lib/api";
@@ -218,7 +219,11 @@ export default function SourcesPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-muted-foreground py-8 text-center">加载中...</p>
+            <div className="space-y-3 py-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
           ) : error ? (
             <p className="text-destructive py-8 text-center">{error}</p>
           ) : sources.length === 0 ? (
@@ -232,6 +237,7 @@ export default function SourcesPage() {
                   <TableHead>名称</TableHead>
                   <TableHead>类型</TableHead>
                   <TableHead>地址</TableHead>
+                  <TableHead className="text-center">通道数</TableHead>
                   <TableHead>状态</TableHead>
                   <TableHead>更新时间</TableHead>
                 </TableRow>
@@ -251,6 +257,9 @@ export default function SourcesPage() {
                     </TableCell>
                     <TableCell className="max-w-[300px] truncate text-muted-foreground">
                       {source.url || "-"}
+                    </TableCell>
+                    <TableCell className="text-center font-mono">
+                      {source.line_count}
                     </TableCell>
                     <TableCell>
                       <Badge variant={source.enabled ? "default" : "outline"}>

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Card,
@@ -18,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader, PageShell } from "@/components/layout/page-frame";
 import type { CrawlerLog } from "@/types";
 import { listLogs } from "@/lib/api";
@@ -39,6 +42,7 @@ const LEVEL_OPTIONS = [
 
 export default function LogsPage() {
   const [logs, setLogs] = useState<CrawlerLog[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,7 +58,10 @@ export default function LogsPage() {
       level: filterLevel || undefined,
       limit: 100,
     })
-      .then(setLogs)
+      .then((res) => {
+        setLogs(res.items);
+        setTotal(res.total);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [filterSource, filterTask, filterLevel]);
@@ -67,12 +74,18 @@ export default function LogsPage() {
         eyebrow="管理"
         title="运行日志"
         description="查看 Crawler 采集过程中的运行日志"
+        actions={
+          <Button variant="outline" size="sm" onClick={load}>
+            <RefreshCw data-icon="inline-start" />
+            刷新
+          </Button>
+        }
       />
 
       <Card>
         <CardHeader>
           <CardTitle>日志列表</CardTitle>
-          <CardDescription>最近的采集运行日志</CardDescription>
+          <CardDescription>共 {total} 条日志记录</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-4 flex flex-wrap gap-3">
@@ -100,7 +113,11 @@ export default function LogsPage() {
           </div>
 
           {loading ? (
-            <p className="text-muted-foreground py-8 text-center">加载中...</p>
+            <div className="space-y-3 py-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
           ) : error ? (
             <p className="text-destructive py-8 text-center">{error}</p>
           ) : logs.length === 0 ? (

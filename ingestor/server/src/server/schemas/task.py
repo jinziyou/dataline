@@ -3,9 +3,18 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field
+
+T = TypeVar("T")
+
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    items: list[T]
+    total: int
+    limit: int
+    offset: int
 
 
 class CrawlerTaskTrigger(BaseModel):
@@ -16,6 +25,7 @@ class CrawlerTaskTrigger(BaseModel):
 class CrawlerTaskRead(BaseModel):
     id: str
     source_id: str
+    source_name: str = ""
     status: str
     config: dict[str, Any]
     total_items: int

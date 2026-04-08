@@ -10,6 +10,7 @@ from server.schemas.task import (
     CrawlerTaskRead,
     CrawlerTaskTrigger,
     CollectedDataRead,
+    PaginatedResponse,
 )
 
 __all__ = [
@@ -22,4 +23,5 @@ __all__ = [
     "CrawlerTaskRead",
     "CrawlerTaskTrigger",
     "CollectedDataRead",
+    "PaginatedResponse",
 ]

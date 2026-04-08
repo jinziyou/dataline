@@ -36,6 +36,7 @@ class SourceRead(BaseModel):
     meta: dict[str, Any]
     created_at: datetime
     updated_at: datetime
+    line_count: int = 0
 
 
 class LineCreate(BaseModel):

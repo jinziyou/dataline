@@ -1,6 +1,7 @@
 "use client";
 
-import { Fragment, useEffect, useState, useCallback } from "react";
+import { Fragment, useEffect, useState, useCallback, useRef } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +67,16 @@ export default function TaskDetailPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  const autoRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (task && (task.status === "running" || task.status === "pending")) {
+      autoRefreshRef.current = setInterval(() => load(), 5000);
+    }
+    return () => {
+      if (autoRefreshRef.current) clearInterval(autoRefreshRef.current);
+    };
+  }, [task, load]);
+
   if (loading) {
     return (
       <PageShell>
@@ -96,12 +107,24 @@ export default function TaskDetailPage() {
       <PageHeader
         eyebrow="任务详情"
         title={task.id}
-        description={`数据源: ${task.source_id}`}
+        description={
+          <>
+            数据源:{" "}
+            <Link href={`/sources/${task.source_id}`} className="text-primary hover:underline">
+              {task.source_name || task.source_id}
+            </Link>
+          </>
+        }
         actions={
-          <Button variant="outline" size="sm" onClick={() => router.push("/results")}>
-            <ArrowLeft data-icon="inline-start" />
-            返回列表
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => router.push("/results")}>
+              <ArrowLeft data-icon="inline-start" />
+              返回列表
+            </Button>
+            {(task.status === "running" || task.status === "pending") && (
+              <Badge variant="secondary" className="animate-pulse">自动刷新中</Badge>
+            )}
+          </div>
         }
       />
 

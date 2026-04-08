@@ -13,7 +13,7 @@ from datetime import datetime
 
 from sqlmodel import Session
 
-from crawler import Crawler, CrawlerResult, CrawlerRunner, Line, Source, SourceType
+from crawler import Crawler, CrawlerResult, Line, Source, SourceType
 
 from server.models.source import SourceModel, LineModel
 from server.models.task import CrawlerTaskModel, CollectedDataModel
@@ -45,6 +45,12 @@ def _to_domain_source(m: SourceModel, line_models: list[LineModel]) -> Source:
         meta=m.meta or {},
         lines=[_to_domain_line(lm) for lm in line_models],
     )
+
+
+def _get_session() -> Session:
+    """Create an independent session for background tasks."""
+    from server.core.database import engine
+    return Session(engine)
 
 
 async def run_crawler_for_source(
@@ -96,14 +102,10 @@ async def _execute_and_save(
     overrides: dict | None,
 ) -> None:
     """后台执行采集并持久化结果"""
-    from server.core.database import get_session
-
     try:
         result = await run_crawler_for_source(source_model, line_models, overrides)
 
-        session_gen = get_session()
-        session = next(session_gen)
-        try:
+        with _get_session() as session:
             task_model = session.get(CrawlerTaskModel, task_id)
             if task_model:
                 task_model.status = "success"
@@ -140,17 +142,10 @@ async def _execute_and_save(
                 )
                 session.add(log)
                 session.commit()
-        finally:
-            try:
-                next(session_gen)
-            except StopIteration:
-                pass
 
     except Exception as e:
         logger.error("Crawl task %s failed: %s", task_id, e)
-        session_gen = get_session()
-        session = next(session_gen)
-        try:
+        with _get_session() as session:
             task_model = session.get(CrawlerTaskModel, task_id)
             if task_model:
                 task_model.status = "failed"
@@ -165,8 +160,3 @@ async def _execute_and_save(
             )
             session.add(log)
             session.commit()
-        finally:
-            try:
-                next(session_gen)
-            except StopIteration:
-                pass
