@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -35,17 +37,36 @@ const STATUS_LABEL: Record<string, string> = {
   failed: "失败",
 };
 
+const STATUS_OPTIONS = [
+  { value: "", label: "全部状态" },
+  { value: "pending", label: "等待中" },
+  { value: "running", label: "运行中" },
+  { value: "success", label: "成功" },
+  { value: "failed", label: "失败" },
+];
+
 export default function ResultsPage() {
+  const router = useRouter();
   const [tasks, setTasks] = useState<CrawlerTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    listTasks({ limit: 50 })
+  const [filterSource, setFilterSource] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+
+  const load = useCallback(() => {
+    setLoading(true);
+    listTasks({
+      source_id: filterSource || undefined,
+      status: filterStatus || undefined,
+      limit: 50,
+    })
       .then(setTasks)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [filterSource, filterStatus]);
+
+  useEffect(() => { load(); }, [load]);
 
   return (
     <PageShell>
@@ -58,9 +79,27 @@ export default function ResultsPage() {
       <Card>
         <CardHeader>
           <CardTitle>任务列表</CardTitle>
-          <CardDescription>最近的采集任务及执行状态</CardDescription>
+          <CardDescription>最近的采集任务及执行状态，点击行查看详情</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-4 flex flex-wrap gap-3">
+            <Input
+              placeholder="按数据源 ID 筛选"
+              value={filterSource}
+              onChange={(e) => setFilterSource(e.target.value)}
+              className="max-w-[200px]"
+            />
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="h-9 rounded-xl border border-border/60 bg-muted/30 px-3 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              {STATUS_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+
           {loading ? (
             <p className="text-muted-foreground py-8 text-center">加载中...</p>
           ) : error ? (
@@ -84,7 +123,11 @@ export default function ResultsPage() {
               </TableHeader>
               <TableBody>
                 {tasks.map((task) => (
-                  <TableRow key={task.id}>
+                  <TableRow
+                    key={task.id}
+                    className="cursor-pointer"
+                    onClick={() => router.push(`/results/${task.id}`)}
+                  >
                     <TableCell className="font-mono text-xs">
                       {task.id}
                     </TableCell>

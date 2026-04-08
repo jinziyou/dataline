@@ -167,8 +167,11 @@ class CrawlerContext:
 
     def _create_downloader(self) -> BaseDownloader:
         if self.config.downloader == DownloaderType.PLAYWRIGHT:
-            logger.warning(
-                "Playwright downloader not yet implemented, falling back to HTTP"
+            from crawler.crawler.downloaders.playwright import PlaywrightDownloader
+
+            return PlaywrightDownloader(
+                default_headers=self.config.headers,
+                timeout=self.config.timeout,
             )
         return HttpDownloader(
             default_headers=self.config.headers,
