@@ -46,6 +46,19 @@ class DensityBasedDetector:
 
     MIN_LINK_GROUP_SIZE = 3
 
+    # 时间相关的常见 class 名（精确匹配）
+    _TIME_CLASSES = (
+        "date", "time", "publish-date", "pub-date", "datetime", "publish_time",
+        "pubdate", "publishDate", "published", "created", "updated", "timestamp",
+        "post-time", "post-date", "article-date", "news-date", "news-time",
+        "release-time", "create-time", "update-time",
+    )
+
+    # 正文检测时跳过的结构性标签
+    _CONTENT_SKIP_TAGS = frozenset({
+        "body", "html", "head", "header", "nav", "footer", "aside", "form",
+    })
+
     def detect_from_listing(self, html: str) -> list[str]:
         """分析列表页 HTML，返回链接选择器列表。"""
         soup = BeautifulSoup(html, "html.parser")
@@ -96,17 +109,26 @@ class DensityBasedDetector:
         return None
 
     def _detect_time(self, soup: BeautifulSoup) -> str | None:
+        # 1. 语义化 <time> 标签（最可靠）
         time_tag = soup.find("time")
         if time_tag and isinstance(time_tag, Tag):
             return "time"
 
-        for cls in ("date", "time", "publish-date", "pub-date", "datetime", "publish_time"):
+        # 2. 带 datetime 属性的任意元素
+        dt_tag = soup.find(attrs={"datetime": True})
+        if dt_tag and isinstance(dt_tag, Tag):
+            return self._tag_selector(dt_tag)
+
+        # 3. 常见时间 class 名（精确匹配）
+        for cls in self._TIME_CLASSES:
             el = soup.find(class_=cls)
             if el and isinstance(el, Tag):
                 return f".{cls}"
+
         return None
 
     def _detect_content(self, soup: BeautifulSoup) -> str | None:
+        # 优先检查语义化选择器（按可信度排序）
         for selector in (
             "article",
             ".content",
@@ -114,21 +136,36 @@ class DensityBasedDetector:
             ".post-content",
             ".article-body",
             "main",
+            ".entry-content",
+            ".post-body",
+            ".news-content",
+            ".article-detail",
+            ".detail-content",
         ):
             el = soup.select_one(selector)
-            if el and len(el.get_text(strip=True)) > 100:
+            if el and isinstance(el, Tag) and len(el.get_text(strip=True)) > 100:
                 return selector
 
+        # 按文本密度回退：文本长度与 HTML 长度之比高的容器最可能是正文
         best: Tag | None = None
-        best_len = 0
+        best_density = 0.0
         for tag in soup.find_all(["div", "article", "section", "main"]):
-            if isinstance(tag, Tag):
-                text_len = len(tag.get_text(strip=True))
-                if text_len > best_len:
-                    best = tag
-                    best_len = text_len
+            if not isinstance(tag, Tag):
+                continue
+            if tag.name in self._CONTENT_SKIP_TAGS:
+                continue
+            text_len = len(tag.get_text(strip=True))
+            if text_len < 100:
+                continue
+            html_len = len(str(tag))
+            if html_len == 0:
+                continue
+            density = text_len / html_len
+            if density > best_density:
+                best = tag
+                best_density = density
 
-        if best and best_len > 100:
+        if best is not None:
             return self._tag_selector(best)
         return None
 

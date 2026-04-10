@@ -32,6 +32,7 @@ from crawler.crawler.extractor import (
     PageExtractor,
 )
 from crawler.crawler.task import (
+    DownloadError,
     ExtractorConfig,
     TaskConfig,
     TaskExecutor,
@@ -50,6 +51,7 @@ __all__ = [
     "Data",
     "DataExtractor",
     "DeduplicationStrategy",
+    "DownloadError",
     "DensityBasedDetector",
     "DetectedSelectors",
     "DownloaderType",

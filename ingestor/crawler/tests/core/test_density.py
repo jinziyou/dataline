@@ -92,3 +92,79 @@ def test_detect_content_by_density() -> None:
     detector = DensityBasedDetector()
     result = detector.detect_from_detail(html)
     assert result.content_selector is not None
+
+
+# ---------------------------------------------------------------------------
+# 时间检测：扩展模式
+# ---------------------------------------------------------------------------
+
+
+def test_detect_time_from_datetime_attribute() -> None:
+    """无 <time> 标签时，含 datetime 属性的元素可作为时间选择器。"""
+    html = '<span class="publish-time" datetime="2025-01-15">2025年1月15日</span>'
+    detector = DensityBasedDetector()
+    result = detector.detect_from_detail(html)
+    assert result.time_selector is not None
+
+
+def test_detect_time_from_extended_class_names() -> None:
+    """扩展 class 名列表中的常见时间 class 均可被检测。"""
+    for cls in ("pubdate", "timestamp", "post-date", "update-time", "create-time"):
+        html = f'<div class="{cls}">2025-01-15</div>'
+        detector = DensityBasedDetector()
+        result = detector.detect_from_detail(html)
+        assert result.time_selector == f".{cls}", f"Expected .{cls} but got {result.time_selector}"
+
+
+def test_detect_time_prefers_time_tag_over_datetime_attr() -> None:
+    """<time> 标签优先级高于 datetime 属性。"""
+    html = """
+    <span datetime="2025-01-01">span with datetime</span>
+    <time>2025-01-15</time>
+    """
+    detector = DensityBasedDetector()
+    result = detector.detect_from_detail(html)
+    assert result.time_selector == "time"
+
+
+# ---------------------------------------------------------------------------
+# 内容检测：密度优于范围
+# ---------------------------------------------------------------------------
+
+
+def test_detect_content_avoids_navigation_heavy_divs() -> None:
+    """链接密度高的导航区不应被选为内容区。"""
+    html = """
+    <div class="nav-links">
+        <a href="/p1">Link 1</a><a href="/p2">Link 2</a><a href="/p3">Link 3</a>
+        <a href="/p4">Link 4</a><a href="/p5">Link 5</a><a href="/p6">Link 6</a>
+        <a href="/p7">Link 7</a><a href="/p8">Link 8</a><a href="/p9">Link 9</a>
+    </div>
+    <div id="article">
+        <p>这是正文区域，包含了非常丰富的文章内容。通过信息密度分析，
+        这一段落的文字与 HTML 标签的比例远高于纯链接导航区域。
+        继续补充内容以确保此区域能被密度检测算法正确识别为正文。</p>
+    </div>
+    """
+    detector = DensityBasedDetector()
+    result = detector.detect_from_detail(html)
+    assert result.content_selector is not None
+    assert "nav" not in (result.content_selector or "")
+
+
+def test_detect_content_prefers_semantic_over_density_fallback() -> None:
+    """有语义标签（article）时优先使用，而不走密度回退。"""
+    html = """
+    <div id="giant">
+        这里有一大堆重复文字填充内容来使这个 div 的文本非常长，以便测试密度检测算法。
+        重复重复重复重复重复重复重复重复重复重复重复重复重复重复重复重复重复重复。
+    </div>
+    <article>
+        这是语义正文标签，内容足够丰富，应该被优先选择。本文探讨了各种技术话题的
+        深层逻辑和实现细节，涵盖了从架构设计到具体编码的各个方面，为读者提供了
+        全面而深入的技术视角。此处的文字数量已超过一百个字符，满足密度检测阈值。
+    </article>
+    """
+    detector = DensityBasedDetector()
+    result = detector.detect_from_detail(html)
+    assert result.content_selector == "article"

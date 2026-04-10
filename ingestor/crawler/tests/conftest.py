@@ -24,4 +24,5 @@ def minimal_crawler_config() -> CrawlerConfig:
         tasks=[
             TaskConfig(task_id="t-1", line_id="l-1", line_name="L1", url="https://example.test/a"),
         ],
+        retry_max=0,  # 单元测试中禁用重试，避免测试变慢
     )
